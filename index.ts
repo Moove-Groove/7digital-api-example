@@ -3,31 +3,17 @@ import oauth from 'oauth-signature';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
+import qs from 'qs';
 
 const endpoint = 'https://api.7digital.com/1.2';
 const consumerKey = '[KEY]';
 const consumerSecret = '[SECRET]';
 
 
-const getPlayList = async () => {
-  const id = '[PLAYLIST_ID]]';
+const getPlayList = async (params: any) => {
+  const id = '[ID]';
   const url = `${endpoint}/playlists/${id}`;
-  const params = {
-    country: 'AU'
-  }
-  const authParams = {
-    oauth_consumer_key: consumerKey,
-    oauth_nonce: Math.random().toString(36).replace(/[^a-z]/, '').substring(2),
-    oauth_timestamp: Math.floor(new Date().getTime() / 1000),
-    oauth_signature_method: 'HMAC-SHA1',
-    oauth_version: '1.0',
-    country: 'AU'
-  };
-
-  const signature = oauth.generate('GET', url, authParams, consumerSecret, '',
-    { encodeSignature: true });
-
-  const oath = `OAuth oauth_consumer_key="${consumerKey}",oauth_signature_method="${authParams.oauth_signature_method}",oauth_signature="${signature}",oauth_timestamp="${authParams.oauth_timestamp}",oauth_nonce="${authParams.oauth_nonce}",oauth_version="${authParams.oauth_version}"`
+  const oath = createAuthorisation('GET', url, params);
 
   const response = await axios.get(url, {
     params,
@@ -39,25 +25,9 @@ const getPlayList = async () => {
   console.log('>>>', response.data)
 }
 
-const createUser = async () => {
+const createUser = async (params: any) => {
   const url = `${endpoint}/user/create`;
-  const params = {
-    userID: '[userId]',
-    country: 'AU'
-  }
-  const authParams = {
-    oauth_consumer_key: consumerKey,
-    oauth_nonce: Math.random().toString(36).replace(/[^a-z]/, '').substring(2),
-    oauth_timestamp: Math.floor(new Date().getTime() / 1000),
-    oauth_signature_method: 'HMAC-SHA1',
-    oauth_version: '1.0',
-    ...params,
-  };
-
-  const signature = oauth.generate('GET', url, authParams, consumerSecret, '',
-    { encodeSignature: true });
-
-  const oath = `OAuth oauth_consumer_key="${consumerKey}",oauth_signature_method="${authParams.oauth_signature_method}",oauth_signature="${signature}",oauth_timestamp="${authParams.oauth_timestamp}",oauth_nonce="${authParams.oauth_nonce}",oauth_version="${authParams.oauth_version}"`
+  const oath = createAuthorisation('POST', url, params);
 
   try {
     const response = await axios.get(url, {
@@ -67,6 +37,7 @@ const createUser = async () => {
         Accept: 'application/json',
       }
     });
+    console.log(response.data);
   } catch (error: any) {
     console.error(error.response);
   }
@@ -89,19 +60,7 @@ const createSubscription = async () => {
     expiryDate,
   };
 
-  const authParams = {
-    oauth_consumer_key: consumerKey,
-    oauth_nonce: Math.random().toString(36).replace(/[^a-z]/, '').substring(2),
-    oauth_timestamp: Math.floor(new Date().getTime() / 1000),
-    oauth_signature_method: 'HMAC-SHA1',
-    oauth_version: '1.0',
-    ...data
-  };
-
-  const signature = oauth.generate('POST', url, authParams, consumerSecret, '',
-    { encodeSignature: true });
-
-  const oath = `OAuth oauth_consumer_key="${consumerKey}",oauth_signature_method="${authParams.oauth_signature_method}",oauth_signature="${signature}",oauth_timestamp="${authParams.oauth_timestamp}",oauth_nonce="${authParams.oauth_nonce}",oauth_version="${authParams.oauth_version}"`
+  const oath = createAuthorisation('POST', url, data);
 
   try {
     const response = await axios.post(url, data, {
@@ -117,6 +76,41 @@ const createSubscription = async () => {
   }
 }
 
-getPlayList();
-// createUser();
+const createAuthorisation = (method: 'GET' | 'POST', url: string, params: any) => {
+
+  const oauthParams = {
+    oauth_consumer_key: consumerKey,
+    oauth_nonce: Math.random().toString(36).replace(/[^a-z]/, '').substring(2),
+    oauth_timestamp: Math.floor(new Date().getTime() / 1000),
+    oauth_signature_method: 'HMAC-SHA1',
+  }
+
+  const data = {
+    ...oauthParams,
+    ...params,
+  };
+
+  const signature = oauth.generate('POST', url, data, consumerSecret, '',
+    { encodeSignature: true });
+
+  const authorisation = qs.stringify({
+    ...oauthParams,
+    oauth_signature: signature,
+  }, {
+    delimiter: ','
+  });
+  return `OAuth ${authorisation}`;
+}
+
+/**
+ * UNCOMMENCT TO RUN EXAMPLES
+ */
+
+// getPlayList({
+//   country: 'AU'
+// });
+// createUser({
+//   userID: '[userId]',
+//   country: 'AU'
+// });
 // createSubscription();
