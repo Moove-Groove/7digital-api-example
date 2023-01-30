@@ -27,7 +27,7 @@ const getPlayList = async (params: any) => {
 
 const createUser = async (params: any) => {
   const url = `${endpoint}/user/create`;
-  const oath = createAuthorisation('POST', url, params);
+  const oath = createAuthorisation('GET', url, params);
 
   try {
     const response = await axios.get(url, {
