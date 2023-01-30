@@ -10,9 +10,9 @@ const consumerKey = '[KEY]';
 const consumerSecret = '[SECRET]';
 
 
-const getPlayList = async (params: any) => {
-  const id = '[ID]';
-  const url = `${endpoint}/playlists/${id}`;
+const getPlayList = async (params: { id: string, country: string }) => {
+
+  const url = `${endpoint}/playlists/${params.id}`;
   const oath = createAuthorisation('GET', url, params);
 
   const response = await axios.get(url, {
@@ -43,13 +43,13 @@ const createUser = async (params: any) => {
   }
 }
 
-const createSubscription = async () => {
+const createSubscription = async (params: { userId: string}) => {
   const url = `${endpoint}/user/unlimitedStreaming`;
 
   const activatedAt = dayjs().utc().format();
   const expiryDate = dayjs().add(1, 'month').utc().format();
   const data = {
-    userId: '[userId]',
+    userId: params.userId,
     planCode: 'standard-unlimited-streaming',
     status: 'active',
     currency: 'AUD',
@@ -83,6 +83,7 @@ const createAuthorisation = (method: 'GET' | 'POST', url: string, params: any) =
     oauth_nonce: Math.random().toString(36).replace(/[^a-z]/, '').substring(2),
     oauth_timestamp: Math.floor(new Date().getTime() / 1000),
     oauth_signature_method: 'HMAC-SHA1',
+    oauth_version: '1.0',
   }
 
   const data = {
@@ -90,7 +91,7 @@ const createAuthorisation = (method: 'GET' | 'POST', url: string, params: any) =
     ...params,
   };
 
-  const signature = oauth.generate('POST', url, data, consumerSecret, '',
+  const signature = oauth.generate(method, url, data, consumerSecret, '',
     { encodeSignature: true });
 
   const authorisation = qs.stringify({
@@ -99,18 +100,24 @@ const createAuthorisation = (method: 'GET' | 'POST', url: string, params: any) =
   }, {
     delimiter: ','
   });
+
   return `OAuth ${authorisation}`;
 }
 
 /**
- * UNCOMMENCT TO RUN EXAMPLES
+ * UNCOMMENT TO RUN EXAMPLES
  */
 
 // getPlayList({
+//   id: '[id]',
 //   country: 'AU'
 // });
+
 // createUser({
-//   userID: '[userId]',
+//   userID: '[userId],
 //   country: 'AU'
 // });
-// createSubscription();
+
+// createSubscription({
+//   userId: '[userId]',
+// });
