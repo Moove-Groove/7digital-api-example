@@ -6,8 +6,8 @@ dayjs.extend(utc);
 import qs from 'qs';
 
 const endpoint = 'https://api.7digital.com/1.2';
-const consumerKey = '[key]';
-const consumerSecret = '[secret]';
+const consumerKey = '7d3jwqdft6xp';
+const consumerSecret = 'b2c62k9m4uzb69gn';
 
 
 const getPlayList = async (params: { id: string, country: string }) => {
@@ -81,8 +81,7 @@ const logSubscriberStream = async (params: { userId: string, country: string, pl
   const url = `${endpoint}/user/subscription/log?userId=${userId}&country=${country}`;
 
   const data = { playLogItem };
-  const oath = createAuthorisation('POST', url, data);
-  console.log('========== OAUTH', oath)
+  const oath = createAuthorisation('POST', url, { userId, country });
   try {
     const response = await axios.post(url, data, {
       headers: {
@@ -112,21 +111,8 @@ const createAuthorisation = (method: 'GET' | 'POST', url: string, params: any) =
     ...params,
   };
 
-  console.log('DATA TO BE AUTHORISED', data)
-  console.log('URL TO BE AUTHORISED', url)
-
   const signature = oauth.generate(method, url, data, consumerSecret, '',
     { encodeSignature: true });
-
-  console.log('>>>>>>>>>>>>>>>', oauthParams)
-
-  // manually create the oath string
-  let authParams: string[] = [`oauth_signature="${encodeURIComponent(signature)}"`];
-  for (const [key, value] of Object.entries(oauthParams)) {
-    authParams.push(`${key}="${value}"`);
-  }
-  const authStr = authParams.join(',');
-  console.log('=========1>', authStr)
 
   // use QS to stringify the oauth params
   const authorisation = qs.stringify({
@@ -135,10 +121,8 @@ const createAuthorisation = (method: 'GET' | 'POST', url: string, params: any) =
   }, {
     delimiter: ','
   });
-  console.log('=========2>', authorisation)
 
-  return `OAuth ${authStr}`;
-  // return `OAuth ${authorisation}`;
+  return `OAuth ${authorisation}`;
 }
 
 /**
